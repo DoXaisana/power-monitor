@@ -1,7 +1,7 @@
 #include "config.h"           // Program configuration
 #include "includes.h"         // Main includes
 
-const char* mqttTopic = "Enter your mqtt toppic";
+const char* mqttTopic = "Readsensor/PZEM";
 
 SoftwareSerial pzemSWSerial( D2, D5 ); // RX, TX ports for pzem
 
@@ -13,10 +13,9 @@ PZEM004Tv30 pzems[PZEM_COUNT];  // Initialize the PZEM
 int const delay_timer = 1000 * 60; // 1 minute between polling
 
 void readData(int count){
-  for( int i = 0; i < count; i++ )
-  {
-    Serial.print( "PZEM: " );
-    Serial.println( i );
+  for(int i = 0; i < count; i++) {
+    Serial.print("PZEM: ");
+    Serial.println(i + 1);
 
     // Read the data from the sensor
     float voltage   = pzems[i].voltage();
@@ -26,26 +25,15 @@ void readData(int count){
     float frequency = pzems[i].frequency();
     float pf        = pzems[i].pf();
   
-    // Check if the data is valid
-    if( isnan( voltage ) )
-      voltage = -1;
-      
-    if( isnan( current ) )
-      current = -1;
-      
-    if( isnan( power ) )
-      power = -1;
-      
-    if( isnan( energy ) )
-      energy = -1;
-      
-    if( isnan( frequency ) )
-      frequency = -1;
-      
-    if( isnan( pf ) )
-      pf = -1;
+    // Check if the data is valid and set to -1 if not
+    if(isnan(voltage)) voltage = -1;
+    if(isnan(current)) current = -1;
+    if(isnan(power)) power = -1;
+    if(isnan(energy)) energy = -1;
+    if(isnan(frequency)) frequency = -1;
+    if(isnan(pf)) pf = -1;
 
-    //Debug data
+    // Debug data
     Serial.print("voltage: ");
     Serial.println(voltage);
     Serial.print("current: ");
@@ -60,24 +48,24 @@ void readData(int count){
     Serial.println(pf);
     Serial.println();
 
-    String send_voltage   = String(pzems[i].voltage()).c_str();
-    String send_current   = String(pzems[i].current()).c_str();
-    String send_power     = String(pzems[i].power()).c_str();
-    String send_energy    = String(pzems[i].energy()).c_str();
-    String send_frequency = String(pzems[i].frequency()).c_str();
-    String send_pf        = String(pzems[i].pf()).c_str();
-    String num = String( i + 1 ).c_str();
+    // Using ArduinoJson to build the JSON string
+    StaticJsonDocument<200> doc;
+    doc["id"] = i + 1;
+    doc["voltage"] = voltage;
+    doc["current"] = current;
+    doc["power"] = power;
+    doc["energy"] = energy;
+    doc["frequency"] = frequency;
+    doc["pf"] = pf;
 
-    String pub_data = "{\"PZEM\":" + num + 
-                        ",\"voltage\":" + send_voltage  + 
-                        ",\"current\":" + send_current + 
-                        ",\"current\":" + send_current + 
-                        ",\"current\":" + send_current + 
-                        ",\"current\":" + send_current +"}";
+    char msg_data[200];
+    serializeJson(doc, msg_data);
+
+    mqttClient.publish("Readsensor/PZEM", msg_data);
+
     Serial.print("Data of PZEM ");
-    Serial.print(i+1);
-    Serial.print("Has Sent to MQTT Broker");
-    Serial.println();
+    Serial.print(i + 1);
+    Serial.println(" Has Sent to MQTT Broker");
   }
 }
 
@@ -143,5 +131,5 @@ void loop()
   }
   readData(PZEM_COUNT);
   Serial.println( "Waiting for next polling..." );
-  delay( delay_timer );
+  delay( 10000 );
 }
