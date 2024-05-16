@@ -8,7 +8,8 @@ config.h
 #define config_h
 
 // Configuration to be used by pzem monitoring
-
+//MQTT Topic
+const char* mqttTopic = "Enter your MQTT Topic";
 // MQTT Server
 #define MQTT_ADDR "mqtt_url"
 // MQTT port

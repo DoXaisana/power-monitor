@@ -1,8 +1,6 @@
 #include "config.h"           // Program configuration
 #include "includes.h"         // Main includes
 
-const char* mqttTopic = "Readsensor/PZEM";
-
 SoftwareSerial pzemSWSerial( D2, D5 ); // RX, TX ports for pzem
 
 int const PZEM_COUNT = 3;       // Number of PZEM units
@@ -61,7 +59,7 @@ void readData(int count){
     char msg_data[200];
     serializeJson(doc, msg_data);
 
-    mqttClient.publish("Readsensor/PZEM", msg_data);
+    mqttClient.publish(mqttTopic, msg_data);
 
     Serial.print("Data of PZEM ");
     Serial.print(i + 1);
